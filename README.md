@@ -1,64 +1,134 @@
-# PDF_Listen_Book
+# PDF Listen Book
 
-PDF_Listen_Book 是一个创新的工具，旨在将 PDF 文档转换为可听的音频内容。这个项目结合了 PDF 文本提取、自然语言处理和文本转语音技术，为用户提供了一种新颖的方式来"阅读"PDF文档。
+⚠️ **免责声明**：本项目大部分由 AI 辅助构建，虽然经过测试但可能存在不可预见的 bug。使用前请确保了解风险，作者不对因使用本软件导致的任何损失负责。
 
-## 功能特点
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-- PDF 到文本的转换：精确提取 PDF 文件中的文本内容。
-- 文本优化：智能处理提取的文本，修复换行问题，提高可读性。
-- 自定义文本处理：支持使用大语言模型（如 GPT）进行文本纠错和优化。
-- 文本分块：将长文本智能分割为适合音频播放的小段落。
-- AI 朗读：集成 AI Vtuber API，将文本转换为流畅的语音输出。
-- 用户友好界面：使用 Gradio 构建的简洁直观的 Web 界面。
+**将 PDF 论文转换为可听的语音，支持边读边看、文本编辑和本地语音合成** 
 
-## 安装
+> 无需等待整篇转换完成，边生成边播放 | 点击文本跳转播放 | 本地 TTS 免费使用  
+> 专为学术论文阅读优化，解决 PDF 识别错误 | 适合视力障碍者/通勤场景/多任务处理
 
-1. 克隆仓库：
-   ```
-   git clone https://github.com/Ikaros-521/PDF_Listen_Book.git
-   cd PDF_Listen_Book
-   ```
+## ✨ 核心功能
 
-2. 安装依赖：
-   ```
-   pip install -r requirements.txt
-   ```
+### 📚 智能 PDF 处理
+- 自动提取文本并智能分段（修复换行/断词问题）
+- 支持直接编辑识别内容（删除目录/页眉等干扰项）
+- 中文论文优化分段（按句号/段落智能切割）
 
-## 使用方法
+### 🔉 语音播放
+- **边生成边播放**：无需等待整篇合成完成
+- **点击跳转**：点击任意段落立即跳转播放
+- **双模式 TTS**：
+  - ✅ **本地 TTS**（默认）：使用 edge-tts（微软神经语音），**完全免费**，无需 API Key
+  - ☁️ **云端 API**：支持阿里云百炼（CosyVoice）、OpenAI TTS 等
+- 📥 **完整音频下载**：合并所有片段为一个 MP3 文件
+- ⛔ **停止生成**：可随时终止耗时操作
 
-1. 运行主程序：
-   ```
-   python main.py
-   ```
+### 💻 用户体验
+- 与播放进度同步的**高亮文本**（卡拉OK效果）
+- 语速调节（0.5x ~ 2.0x）
+- 语音角色切换（本地支持 4+ 种中文神经语音）
+- 操作记录与状态反馈
 
-2. 在浏览器中打开显示的本地地址（通常是 http://127.0.0.1:7860）。
+## 🚀 快速开始
 
-3. 在 Web 界面中：
-   - 上传 PDF 文件
-   - PDF转文本
-   - 设置 OpenAI API 密钥和其他必要参数
-   - 选择处理选项（如文本纠错、总结等）
-   - 发送AI Vtuber托管文本队列和播放
+### 1. 克装依赖
+```bash
+pip install -r requirements.txt
+```
 
-## 配置
+### 2. 启动服务
+```bash
+uvicorn app.server:app --host 0.0.0.0 --port 8000
+```
+访问 http://127.0.0.1:8000
 
-- `OpenAI API 密钥`：用于文本处理和优化。
-- `AI Vtuber API 地址`：用于文本到语音的转换。
-- 其他配置选项可在 Web 界面中设置。
+### 3. 使用流程
+1. **上传 PDF** 或 **直接编辑文本**
+2. 勸击"获取模型列表"（仅云端模式需要）
+3. **选择语音模式**：
+   - ✅ 本地 TTS：默认勾选，立即使用（推荐）
+   - ☁️ 云端 API：填写 API Key 后选择模型
+4. 点击"处理并加载"
+5. 点击播放按钮开始听书
 
-## 许可证
+## ⚙️ 配置说明
 
-本项目采用 [GPL-V3.0 许可证](LICENSE)。
+### 本地 TTS（默认）
+无需配置，开箱即用，支持以下语音：
+| 语音模型 | 适用场景 |
+|----------|----------|
+| `zh-CN-XiaoxiaoNeural` | 通用女声（推荐） |
+| `zh-CN-YunxiNeural` | 年轻男声 |
+| `zh-CN-YunjianNeural` | 沉稳男声 |
+| `zh-CN-XiaoyiNeural` | 儿嫩女声 |
 
-## 联系方式
+### 云端 API（可选）
+1. 复制你的 API Key（如 [阿里云百炼](https://help.aliyun.com/zh/model-studio)）
+2. 填写配置：
+   - **API Base URL**：`https://dashscope.aliyuncs.com/compatible-mode/v1`
+   - **TTS 模型**：`cosyvoice-v3-flash`（推荐）
+   - **语音角色**：`longanyang`（v3 模型专属）
+3. 点击"获取模型列表"自动填充选项
 
-如有任何问题或建议，请开启一个 issue 或直接联系项目维护者。
+> 💡 提示：新用户通常有免费额度，[查看定价](https://help.aliyun.com/zh/model-studio/cosyvoice)
+
+## 📦 部署选项
+
+### 本地运行（推荐）
+```bash
+uvicorn app.server:app --host 127.0.0.1 --port 8000
+```
+
+### Docker 部署
+```bash
+docker build -t pdf-listen-book .
+docker run -p 8000:8000 pdf-listen-book
+```
+
+### Nginx 反向代理
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+    }
+}
+```
+
+## 📂 项目结构
+```
+PDF_Listen_Book/
+├── app/
+│   ├── server.py            # FastAPI 后端
+│   └── static/
+│       ├── index.html      # Web 界面
+│       ├── style.css       # 样式文件
+│       └── app.js          # 前端逻辑
+├── requirements.txt        # 依赖列表
+├── .env.example            # 配置模板
+└── LICENSE                 # MIT 许可证
+```
+
+## 🤝 贡献指南
+1. Fork 本仓库
+2. 创建新分支 (`git checkout -b feature/your-feature`)
+3. 提交更改 (`git commit -am 'Add some feature'`)
+4. 推送分支 (`git push origin feature/your-feature`)
+5. 发起 Pull Request
+
+## 📜 许可证
+本项目采用 [MIT 许可证](LICENSE)，这意味着：
+- ✅ 可以**随意修改代码**
+- ✅ 可以**用于商业项目**
+- ✅ 可以**私有化部署**
+- ❌ 唯须保留原作者版权信息
 
 ---
 
-希望 PDF_Listen_Book 能够为您的阅读体验带来新的可能！
-
-## 更新日志
-
-- 2024-09-30
-   - 初版发布
+> 由开发者社区驱动，为学术研究者打造的阅读工具  
+> 🌐 [GitHub 项目地址](https://github.com/YuKi-skadi/PDF_Listen_Book)

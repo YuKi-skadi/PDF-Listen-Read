@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF-Listen-Read</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+                <header class="app-header">
+                    <h1>PDF-Listen-Read</h1>
+                    <p class="subtitle">将论文变成有声读物</p>
+                </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel: Settings & Controls -->
+            <aside class="control-panel">
+                <!-- API Configuration -->
+                <section class="config-section">
+                    <h2>API 配置</h2>
+                    <div class="form-group">
+                        <label for="api-key">API Key</label>
+                        <input type="password" id="api-key" placeholder="sk-xxxxxxxx" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="api-base">API Base URL</label>
+                        <input type="text" id="api-base" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" value="https://dashscope.aliyuncs.com/compatible-mode/v1">
+                    </div>
+                    <button class="btn btn-secondary" id="fetch-models-btn">获取模型列表</button>
+                    <div class="form-group">
+                        <label for="tts-model">TTS 模型</label>
+                        <select id="tts-model">
+                            <option value="">请先获取模型列表</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="voice">语音角色</label>
+                        <select id="voice">
+                            <option value="">请先选择 TTS 模型</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tts-mode">TTS 模式</label>
+                        <select id="tts-mode">
+                            <option value="local" selected>本地 TTS (免费/快速)</option>
+                            <option value="cloud">云端 API</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="llm-model">LLM 模型 (可选)</label>
+                        <select id="llm-model">
+                            <option value="">请先获取模型列表</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Upload Section -->
+                <section class="upload-section">
+                    <h2>输入内容</h2>
+                    <div class="input-tabs">
+                        <button class="tab-btn active" data-tab="pdf">上传 PDF</button>
+                        <button class="tab-btn" data-tab="text">粘贴文本</button>
+                    </div>
+                    
+                    <div class="tab-content active" id="pdf-tab">
+                        <div class="upload-area" id="upload-area">
+                            <input type="file" id="pdf-input" accept=".pdf" hidden>
+                            <div class="upload-placeholder" id="upload-placeholder">
+                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                                </svg>
+                                <p>点击或拖拽上传 PDF</p>
+                            </div>
+                            <div class="upload-success" id="upload-success" style="display: none;">
+                                <p id="filename-display"></p>
+                                <button class="btn btn-sm" id="change-file-btn">更换文件</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="text-tab">
+                        <textarea id="text-input" placeholder="在此粘贴文本内容..." rows="6"></textarea>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="process-btn" disabled>处理并加载</button>
+                </section>
+
+                <!-- Playback Controls -->
+                <section class="playback-section">
+                    <h2>播放控制</h2>
+                    <div class="progress-info">
+                        <span id="progress-text">0 / 0 段</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button class="btn btn-control" id="prev-btn" disabled title="上一段">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                        </button>
+                        <button class="btn btn-control btn-play" id="play-btn" disabled title="播放">
+                            <svg viewBox="0 0 24 24" fill="currentColor" id="play-icon"><path d="M8 5v14l11-7z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" id="pause-icon" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                        <button class="btn btn-control" id="next-btn" disabled title="下一段">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                        </button>
+                        <button class="btn btn-control" id="stop-btn" disabled title="停止">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                        </button>
+                    </div>
+                    <div class="speed-control">
+                        <label for="speed-slider">语速: <span id="speed-value">1.0x</span></label>
+                        <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
+                    </div>
+                </section>
+
+                <!-- Status -->
+                <section class="status-section">
+                    <div class="status-message" id="status-message"></div>
+                    <div class="status-actions">
+                        <button class="btn btn-sm btn-stop" id="stop-gen-btn" style="display:none;">停止生成</button>
+                        <button class="btn btn-sm btn-download" id="download-full-btn" style="display:none;">下载完整音频</button>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- Right Panel: Content Display -->
+            <section class="content-panel">
+                <div class="content-header">
+                    <h2 id="content-title">内容</h2>
+                    <div class="content-actions">
+                        <label class="toggle-llm">
+                            <input type="checkbox" id="llm-toggle">
+                            <span>LLM 优化文本</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="content-area" id="content-area">
+                    <div class="empty-state" id="empty-state">
+                        <p>上传 PDF 文件后，内容将显示在这里</p>
+                    </div>
+                    <div class="text-content" id="text-content" style="display: none;">
+                        <!-- Chunks will be rendered here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Audio element (hidden) -->
+    <audio id="audio-player" preload="auto"></audio>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

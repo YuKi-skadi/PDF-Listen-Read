@@ -1,0 +1,14 @@
+__pycache__/
+__pycache__
+.*
+*.py[cod]
+*.bak
+*.log
+.env
+.git/
+.gitignore
+README.md
+LICENSE
+server.log
+old_app.py.bak
+app/static/audio/*
