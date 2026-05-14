@@ -26,18 +26,24 @@ body {
     background: var(--bg-primary);
     color: var(--text-primary);
     min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
 }
 
 .app-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Header */
 .app-header {
     text-align: center;
     margin-bottom: 24px;
+    flex-shrink: 0;
 }
 
 .app-header h1 {
@@ -59,7 +65,8 @@ body {
     display: grid;
     grid-template-columns: 320px 1fr;
     gap: 24px;
-    min-height: calc(100vh - 140px);
+    flex: 1;
+    min-height: 0;
 }
 
 /* Control Panel */
@@ -67,6 +74,35 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    overflow: hidden;
+}
+
+.control-panel-top {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    padding-right: 4px;
+}
+
+.control-panel-top::-webkit-scrollbar {
+    width: 6px;
+}
+
+.control-panel-top::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.control-panel-top::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+}
+
+.playback-section,
+.status-section {
+    flex-shrink: 0;
 }
 
 .config-section,
@@ -415,6 +451,34 @@ body {
     accent-color: var(--accent);
 }
 
+.btn-llm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.btn-llm:hover:not(:disabled) {
+    background: var(--border);
+}
+
+.btn-clear-cache {
+    width: 100%;
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px dashed var(--border);
+    cursor: pointer;
+}
+
+.btn-clear-cache:hover {
+    border-color: var(--error);
+    color: var(--error);
+}
+
+.btn-llm.loading {
+    color: var(--accent);
+}
+
 .content-area {
     flex: 1;
     overflow-y: auto;
@@ -481,12 +545,34 @@ body {
 
 /* Responsive */
 @media (max-width: 900px) {
+    body {
+        height: auto;
+        overflow: visible;
+    }
+
+    .app-container {
+        height: auto;
+        display: block;
+    }
+
     .main-content {
         grid-template-columns: 1fr;
+        flex: none;
+        min-height: 50vh;
+    }
+
+    .app-header {
+        flex-shrink: 1;
     }
     
     .control-panel {
         order: 2;
+        overflow: visible;
+    }
+
+    .control-panel-top {
+        flex: none;
+        overflow-y: visible;
     }
     
     .content-panel {

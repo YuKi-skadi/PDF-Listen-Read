@@ -5,4 +5,3 @@ httpx>=0.25.0
 pydantic>=2.0.0
 python-multipart>=0.0.6
 edge-tts>=6.1.0
-pycryptodome>=3.19.0

@@ -27,6 +27,7 @@ const elements = {
     ttsMode: document.getElementById('tts-mode'),
     stopGenBtn: document.getElementById('stop-gen-btn'),
     downloadFullBtn: document.getElementById('download-full-btn'),
+    clearCacheBtn: document.getElementById('clear-cache-btn'),
     
     // Input
     pdfInput: document.getElementById('pdf-input'),
@@ -55,7 +56,7 @@ const elements = {
     contentTitle: document.getElementById('content-title'),
     textContent: document.getElementById('text-content'),
     emptyState: document.getElementById('empty-state'),
-    llmToggle: document.getElementById('llm-toggle'),
+    llmBtn: document.getElementById('llm-btn'),
     
     // Status
     statusMessage: document.getElementById('status-message'),
@@ -254,6 +255,7 @@ async function loadDocument(docId) {
         
         updateProgress();
         updateButtons();
+        elements.llmBtn.disabled = false;
         highlightChunk(0);
     } catch (error) {
         setStatus(`错误: ${error.message}`, 'error');
@@ -271,7 +273,7 @@ async function generateTTS(chunkIndex) {
     
     setStatus(`正在生成语音 (${chunkIndex + 1}/${state.chunks.length})...`, 'loading');
     state.isGenerating = true;
-    elements.stopGenBtn.style.display = 'inline-block';
+    elements.stopGenBtn.style.visibility = 'visible';
     
     const isLocal = elements.ttsMode.value === 'local';
     
@@ -312,7 +314,7 @@ async function generateTTS(chunkIndex) {
     } finally {
         state.isGenerating = false;
         state.abortController = null;
-        elements.stopGenBtn.style.display = 'none';
+        elements.stopGenBtn.style.visibility = 'hidden';
     }
 }
 
@@ -329,7 +331,7 @@ function preloadNextChunk(index) {
 async function playChunk(index) {
     if (index >= state.chunks.length) {
         stopPlayback();
-        elements.downloadFullBtn.style.display = 'inline-block';
+        elements.downloadFullBtn.style.visibility = 'visible';
         setStatus('播放完成', 'success');
         return;
     }
@@ -572,7 +574,7 @@ elements.stopGenBtn.addEventListener('click', () => {
         state.abortController.abort();
     }
     state.isGenerating = false;
-    elements.stopGenBtn.style.display = 'none';
+    elements.stopGenBtn.style.visibility = 'hidden';
 });
 
 // Download full audio button
@@ -638,9 +640,97 @@ elements.speedSlider.addEventListener('input', (e) => {
     elements.audioPlayer.playbackRate = state.speed;
 });
 
-// LLM toggle
-elements.llmToggle.addEventListener('change', (e) => {
-    state.useLLM = e.target.checked;
+// LLM optimize button
+elements.llmBtn.addEventListener('click', async () => {
+    if (state.chunks.length === 0) return;
+    
+    elements.llmBtn.disabled = true;
+    elements.llmBtn.textContent = '优化中...';
+    elements.llmBtn.classList.add('loading');
+    setStatus('正在通过 LLM 优化文本...', 'loading');
+    
+    try {
+        const fullText = state.chunks.map(c => c.text).join('\n\n');
+        const response = await fetch('/api/llm-process', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text: fullText,
+                api_key: elements.apiKey.value,
+                api_base: elements.apiBase.value,
+                model: elements.llmModel.value || 'qwen-turbo'
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'LLM 优化失败');
+        }
+        
+        const data = await response.json();
+        state.chunks = data.chunks;
+        state.audioUrls = {};
+        state.currentIndex = 0;
+        
+        renderChunks(state.chunks);
+        updateProgress();
+        updateButtons();
+        
+        setStatus('LLM 优化完成', 'success');
+    } catch (error) {
+        setStatus(`LLM 错误: ${error.message}`, 'error');
+    } finally {
+        elements.llmBtn.disabled = false;
+        elements.llmBtn.textContent = 'LLM 优化文本';
+        elements.llmBtn.classList.remove('loading');
+    }
+});
+
+// Clear cache button
+elements.clearCacheBtn.addEventListener('click', async () => {
+    elements.clearCacheBtn.disabled = true;
+    elements.clearCacheBtn.textContent = '清除中...';
+    setStatus('正在清除缓存...', 'loading');
+    
+    try {
+        const response = await fetch('/api/clear-cache', { method: 'POST' });
+        if (!response.ok) throw new Error('清除缓存失败');
+        
+        const data = await response.json();
+        
+        state.chunks = [];
+        state.docId = null;
+        state.currentIndex = 0;
+        state.isPlaying = false;
+        state.isPaused = false;
+        state.audioUrls = {};
+        state.pendingFile = null;
+        state.abortController = null;
+        state.isGenerating = false;
+        
+        elements.audioPlayer.pause();
+        elements.audioPlayer.removeAttribute('src');
+        elements.audioPlayer.load();
+        
+        elements.textContent.style.display = 'none';
+        elements.emptyState.style.display = '';
+        elements.contentTitle.textContent = '内容';
+        elements.processBtn.disabled = true;
+        elements.llmBtn.disabled = true;
+        elements.stopGenBtn.style.visibility = 'hidden';
+        elements.downloadFullBtn.style.visibility = 'hidden';
+        
+        updateProgress();
+        updateButtons();
+        updatePlayButton();
+        
+        setStatus(`缓存已清除 (${data.deleted_audio_files} 个音频文件, ${data.cleared_documents} 个文档)`, 'success');
+    } catch (error) {
+        setStatus(`错误: ${error.message}`, 'error');
+    } finally {
+        elements.clearCacheBtn.disabled = false;
+        elements.clearCacheBtn.textContent = '清除缓存';
+    }
 });
 
 // Keyboard shortcuts

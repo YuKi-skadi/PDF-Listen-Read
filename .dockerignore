@@ -9,6 +9,4 @@ __pycache__
 .gitignore
 README.md
 LICENSE
-server.log
-old_app.py.bak
 app/static/audio/*

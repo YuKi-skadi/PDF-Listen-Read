@@ -18,6 +18,7 @@
         <main class="main-content">
             <!-- Left Panel: Settings & Controls -->
             <aside class="control-panel">
+                <div class="control-panel-top">
                 <!-- API Configuration -->
                 <section class="config-section">
                     <h2>API 配置</h2>
@@ -55,6 +56,7 @@
                             <option value="">请先获取模型列表</option>
                         </select>
                     </div>
+                    <button class="btn btn-sm btn-clear-cache" id="clear-cache-btn">清除缓存</button>
                 </section>
 
                 <!-- Upload Section -->
@@ -90,6 +92,7 @@
                     
                     <button class="btn btn-primary" id="process-btn" disabled>处理并加载</button>
                 </section>
+                </div>
 
                 <!-- Playback Controls -->
                 <section class="playback-section">
@@ -125,8 +128,8 @@
                 <section class="status-section">
                     <div class="status-message" id="status-message"></div>
                     <div class="status-actions">
-                        <button class="btn btn-sm btn-stop" id="stop-gen-btn" style="display:none;">停止生成</button>
-                        <button class="btn btn-sm btn-download" id="download-full-btn" style="display:none;">下载完整音频</button>
+                        <button class="btn btn-sm btn-stop" id="stop-gen-btn" style="visibility:hidden;">停止生成</button>
+                        <button class="btn btn-sm btn-download" id="download-full-btn" style="visibility:hidden;">下载完整音频</button>
                     </div>
                 </section>
             </aside>
@@ -136,10 +139,7 @@
                 <div class="content-header">
                     <h2 id="content-title">内容</h2>
                     <div class="content-actions">
-                        <label class="toggle-llm">
-                            <input type="checkbox" id="llm-toggle">
-                            <span>LLM 优化文本</span>
-                        </label>
+                        <button class="btn btn-sm btn-llm" id="llm-btn" disabled>LLM 优化文本</button>
                     </div>
                 </div>
                 <div class="content-area" id="content-area">

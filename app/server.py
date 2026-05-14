@@ -1,7 +1,5 @@
-import os
 import re
 import uuid
-import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -273,7 +271,6 @@ async def text_to_speech(req: TTSRequest):
         
         if req.use_local_tts:
             # Use edge-tts (Local, Free, High Quality)
-            import asyncio
             import edge_tts
             
             voice = req.voice or "zh-CN-XiaoxiaoNeural"
@@ -395,6 +392,27 @@ async def delete_audio(audio_id: str):
     if audio_path.exists():
         audio_path.unlink()
     return JSONResponse({"status": "ok"})
+
+
+@app.post("/api/clear-cache")
+async def clear_cache():
+    """Clear all cached audio files and document data"""
+    audio_dir = STATIC_DIR / "audio"
+    deleted_count = 0
+    if audio_dir.exists():
+        for f in audio_dir.iterdir():
+            if f.is_file():
+                f.unlink()
+                deleted_count += 1
+    
+    doc_count = len(TEXT_STORE)
+    TEXT_STORE.clear()
+    
+    return JSONResponse({
+        "status": "ok",
+        "deleted_audio_files": deleted_count,
+        "cleared_documents": doc_count
+    })
 
 
 @app.get("/api/download-full-audio/{doc_id}")
