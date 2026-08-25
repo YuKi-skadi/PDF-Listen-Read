@@ -10,3 +10,6 @@ __pycache__
 README.md
 LICENSE
 app/static/audio/*
+build-exe/
+tmp/
+data/

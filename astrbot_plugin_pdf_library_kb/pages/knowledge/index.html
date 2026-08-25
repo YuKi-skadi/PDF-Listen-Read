@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>论文知识库</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <div>
+          <p class="eyebrow">PDF-LISTEN-READ</p>
+          <h1>论文知识库</h1>
+          <p class="muted">预览 AstrBot 原生知识库当前同步的论文。正文请回到朗读器修改。</p>
+        </div>
+        <button id="sync" class="primary">立即同步</button>
+      </header>
+
+      <section class="grid">
+        <article class="card stats-card">
+          <h2>状态</h2>
+          <dl id="stats"></dl>
+          <p id="status" class="status"></p>
+        </article>
+        <article class="card">
+          <h2>可用模型</h2>
+          <p class="muted small">把下方 ID 填入插件配置中的 Embedding/Rerank Provider ID。</p>
+          <div class="provider-columns">
+            <div><h3>Embedding</h3><ul id="embedding"></ul></div>
+            <div><h3>Rerank</h3><ul id="rerank"></ul></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div><h2>知识库文档</h2><p class="muted small">删除论文后，下一次同步会删除对应索引；文本变更后会重新生成该论文的索引。</p></div>
+          <button id="reload" class="secondary">刷新预览</button>
+        </div>
+        <div id="documents" class="documents"></div>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

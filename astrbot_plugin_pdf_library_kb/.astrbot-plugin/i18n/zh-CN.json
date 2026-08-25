@@ -1,0 +1,8 @@
+{
+  "pages": {
+    "knowledge": {
+      "title": "论文知识库",
+      "description": "查看 PDF-Listen-Read 论文同步状态、模型 ID 和索引预览"
+    }
+  }
+}

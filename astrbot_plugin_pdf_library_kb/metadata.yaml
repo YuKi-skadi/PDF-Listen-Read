@@ -1,0 +1,7 @@
+name: astrbot_plugin_pdf_library_kb
+display_name: 论文库知识库
+description: 将 PDF-Listen-Read 中的论文同步到 AstrBot 原生知识库，并提供论文检索工具。
+short_desc: PDF-Listen-Read 论文库同步与知识库检索
+version: 0.1.2
+author: PDF-Listen-Read
+astrbot_version: ">=4.27,<5"

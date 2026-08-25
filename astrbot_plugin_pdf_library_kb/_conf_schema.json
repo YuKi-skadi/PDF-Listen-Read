@@ -1,0 +1,42 @@
+{
+  "reader_base_url": {
+    "description": "PDF-Listen-Read 服务地址",
+    "type": "string",
+    "default": "http://127.0.0.1:8000",
+    "hint": "如果朗读器和 AstrBot 在同一个 Docker 网络中，请填写朗读器容器名加端口，例如 http://pdf-listen-read:8000。"
+  },
+  "reader_integration_token": {
+    "description": "PDF-Listen-Read 集成 API Token",
+    "type": "string",
+    "default": "",
+    "hint": "填写朗读器 PDF_LISTEN_INTEGRATION_TOKEN 的相同值；建议使用长度足够的随机字符串。"
+  },
+  "embedding_provider_id": {
+    "description": "Embedding Provider ID",
+    "type": "string",
+    "default": "",
+    "hint": "填写 AstrBot 已配置的 Embedding Provider ID。留空时使用 AstrBot 当前已加载的第一个 Embedding Provider。"
+  },
+  "rerank_provider_id": {
+    "description": "Rerank Provider ID（可选）",
+    "type": "string",
+    "default": "",
+    "hint": "填写 AstrBot 已配置的 Rerank Provider ID；留空则只使用稠密检索和稀疏检索融合。"
+  },
+  "knowledge_base_name": {
+    "description": "AstrBot 知识库名称",
+    "type": "string",
+    "default": "PDF-Listen-Read 论文库"
+  },
+  "auto_sync": {
+    "description": "启用自动同步",
+    "type": "bool",
+    "default": true
+  },
+  "sync_interval_minutes": {
+    "description": "自动同步间隔（分钟）",
+    "type": "int",
+    "default": 10,
+    "hint": "最小 1 分钟。设置为较大的值可以减少朗读器和 Embedding API 的请求。"
+  }
+}

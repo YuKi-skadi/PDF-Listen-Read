@@ -1,162 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF-Listen-Read</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>论文库 · PDF Listen Read</title>
+    <link rel="stylesheet" href="/static/style.css?v=20260825-2">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-                <header class="app-header">
-                    <h1>PDF-Listen-Read</h1>
-                    <p class="subtitle">将论文变成有声读物</p>
-                </header>
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">◒</span><span>论文库</span></div>
+        <div class="sidebar-actions">
+            <button class="primary-button" id="import-button">＋ 导入论文</button>
+            <input id="pdf-input" type="file" accept="application/pdf,.pdf" hidden>
+        </div>
+        <label class="search-box"><span>⌕</span><input id="paper-search" placeholder="搜索论文"></label>
+        <section class="favorites-panel">
+            <div class="favorites-header"><button class="favorites-toggle expanded" id="favorites-toggle" aria-label="展开或收起收藏"><span class="favorites-arrow">▸</span><span>收藏</span></button><span id="favorites-count" class="favorites-count">0</span></div>
+            <div id="favorite-list" class="favorite-list"></div>
+        </section>
+        <div id="folder-list" class="folder-list"></div>
+        <div class="sidebar-footer"><span class="status-dot"></span><span>本地论文服务</span><button class="settings-button" id="settings-button" title="设置">⚙</button></div>
+    </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Left Panel: Settings & Controls -->
-            <aside class="control-panel">
-                <div class="control-panel-top">
-                <!-- API Configuration -->
-                <section class="config-section">
-                    <h2>API 配置</h2>
-                    <div class="form-group">
-                        <label for="api-key">API Key</label>
-                        <input type="password" id="api-key" placeholder="sk-xxxxxxxx" value="">
-                    </div>
-                    <div class="form-group">
-                        <label for="api-base">API Base URL</label>
-                        <input type="text" id="api-base" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" value="https://dashscope.aliyuncs.com/compatible-mode/v1">
-                    </div>
-                    <button class="btn btn-secondary" id="fetch-models-btn">获取模型列表</button>
-                    <div class="form-group">
-                        <label for="tts-model">TTS 模型</label>
-                        <select id="tts-model">
-                            <option value="">请先获取模型列表</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="voice">语音角色</label>
-                        <select id="voice">
-                            <option value="">请先选择 TTS 模型</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="tts-mode">TTS 模式</label>
-                        <select id="tts-mode">
-                            <option value="local" selected>本地 TTS (免费/快速)</option>
-                            <option value="cloud">云端 API</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="llm-model">LLM 模型 (可选)</label>
-                        <select id="llm-model">
-                            <option value="">请先获取模型列表</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-sm btn-clear-cache" id="clear-cache-btn">清除缓存</button>
-                </section>
+    <main class="main-panel">
+        <header class="topbar">
+            <div class="breadcrumb" id="breadcrumb">论文库 / 未选择论文</div>
+        </header>
 
-                <!-- Upload Section -->
-                <section class="upload-section">
-                    <h2>输入内容</h2>
-                    <div class="input-tabs">
-                        <button class="tab-btn active" data-tab="pdf">上传 PDF</button>
-                        <button class="tab-btn" data-tab="text">粘贴文本</button>
-                    </div>
-                    
-                    <div class="tab-content active" id="pdf-tab">
-                        <div class="upload-area" id="upload-area">
-                            <input type="file" id="pdf-input" accept=".pdf" hidden>
-                            <div class="upload-placeholder" id="upload-placeholder">
-                                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                                </svg>
-                                <p>点击或拖拽上传 PDF</p>
-                            </div>
-                            <div class="upload-success" id="upload-success" style="display: none;">
-                                <p id="filename-display"></p>
-                                <button class="btn btn-sm" id="change-file-btn">更换文件</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="tab-content" id="text-tab">
-                        <textarea id="text-input" placeholder="在此粘贴文本内容..." rows="6"></textarea>
-                    </div>
-                    
-                    <button class="btn btn-primary" id="process-btn" disabled>处理并加载</button>
-                </section>
+        <section id="empty-view" class="empty-view">
+            <div class="empty-icon">✦</div>
+            <h1>从一篇论文开始</h1>
+            <p>导入 PDF，整理正文，然后在同一个页面阅读和朗读。</p>
+            <button class="primary-button empty-action" id="empty-import-button">导入第一篇论文</button>
+        </section>
+
+        <section id="paper-view" class="paper-view" hidden>
+            <div class="paper-heading">
+                <div class="paper-heading-main">
+                    <div class="eyebrow" id="paper-status">文件夹</div>
+                    <h1 id="paper-title">论文标题</h1>
+                    <div class="paper-meta" id="paper-meta"><button id="favorite-button" class="favorite-button" title="收藏论文" aria-label="收藏论文"></button><span id="paper-page-count"></span><span id="paper-original-name"></span></div>
                 </div>
-
-                <!-- Playback Controls -->
-                <section class="playback-section">
-                    <h2>播放控制</h2>
-                    <div class="progress-info">
-                        <span id="progress-text">0 / 0 段</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progress-fill"></div>
-                        </div>
-                    </div>
-                    <div class="controls">
-                        <button class="btn btn-control" id="prev-btn" disabled title="上一段">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                        </button>
-                        <button class="btn btn-control btn-play" id="play-btn" disabled title="播放">
-                            <svg viewBox="0 0 24 24" fill="currentColor" id="play-icon"><path d="M8 5v14l11-7z"/></svg>
-                            <svg viewBox="0 0 24 24" fill="currentColor" id="pause-icon" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                        </button>
-                        <button class="btn btn-control" id="next-btn" disabled title="下一段">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                        </button>
-                        <button class="btn btn-control" id="stop-btn" disabled title="停止">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
-                        </button>
-                    </div>
-                    <div class="speed-control">
-                        <label for="speed-slider">语速: <span id="speed-value">1.0x</span></label>
-                        <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
-                    </div>
-                </section>
-
-                <!-- Status -->
-                <section class="status-section">
-                    <div class="status-message" id="status-message"></div>
-                    <div class="status-actions">
-                        <button class="btn btn-sm btn-stop" id="stop-gen-btn" style="visibility:hidden;">停止生成</button>
-                        <button class="btn btn-sm btn-download" id="download-full-btn" style="visibility:hidden;">下载完整音频</button>
-                    </div>
-                </section>
-            </aside>
-
-            <!-- Right Panel: Content Display -->
-            <section class="content-panel">
-                <div class="content-header">
-                    <h2 id="content-title">内容</h2>
-                    <div class="content-actions">
-                        <button class="btn btn-sm btn-llm" id="llm-btn" disabled>LLM 优化文本</button>
-                    </div>
+                <div class="heading-actions">
+                    <button class="secondary-button" id="optimize-button">优化文本</button>
+                    <button class="secondary-button" id="save-button">保存文本</button>
+                    <button class="primary-button" id="audio-button">生成完整语音</button>
                 </div>
-                <div class="content-area" id="content-area">
-                    <div class="empty-state" id="empty-state">
-                        <p>上传 PDF 文件后，内容将显示在这里</p>
-                    </div>
-                    <div class="text-content" id="text-content" style="display: none;">
-                        <!-- Chunks will be rendered here -->
-                    </div>
-                </div>
+            </div>
+
+            <div class="view-tabs">
+                <button class="view-tab" data-view="original">原文件</button>
+                <button class="view-tab active" data-view="text">文本</button>
+                <div class="text-toolbar"><label for="text-version-select">文本版本</label><select id="text-version-select"></select><span class="text-toolbar-hint">切换后可继续编辑或生成语音</span><button id="knowledge-hint" class="knowledge-hint" hidden>本文本未设定为知识库文本</button></div>
+            </div>
+
+            <div class="paper-content">
+                <article id="text-view" class="text-view"></article>
+                <iframe id="original-view" class="original-view" title="原始 PDF" hidden></iframe>
+            </div>
+
+            <div class="player-bar">
+                <div class="player-info"><select id="audio-package-select" aria-label="切换语音包"><option value="">尚未生成语音包</option></select><span id="player-progress">0 / 0</span></div>
+                <button class="player-button" id="previous-button" disabled>‹</button>
+                <button class="player-play" id="play-button" disabled>▶</button>
+                <button class="player-button" id="next-button" disabled>›</button>
+                <select id="playback-rate" class="playback-rate" aria-label="播放倍速">
+                    <option value="0.5">0.5x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+                </select>
+                <div class="player-track"><div id="track-fill"></div></div>
+                <audio id="audio-player" preload="auto"></audio>
+            </div>
+        </section>
+    </main>
+</div>
+<div id="context-menu" class="context-menu" hidden></div>
+<div id="import-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
+        <div class="modal-header"><div><div class="eyebrow">IMPORT PAPER</div><h2 id="import-title">导入论文</h2></div><button class="icon-button" id="close-import">×</button></div>
+        <div class="import-body">
+            <label>目标文件夹<select id="import-folder-select"></select></label>
+            <p>先选择论文要归属的文件夹，再从本地选择 PDF 文件。</p>
+            <button class="primary-button" id="choose-pdf-button">选择本地 PDF</button>
+        </div>
+    </section>
+</div>
+<div id="settings-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="modal-header"><div class="settings-heading"><span class="settings-large-icon">⚙</span><div><div class="eyebrow">PREFERENCES</div><h2 id="settings-title">设置</h2></div></div><button class="icon-button" id="close-settings">×</button></div>
+        <div class="settings-scroll">
+            <section class="settings-section"><h3>文本阅读</h3>
+                <div class="settings-grid"><label>字体<select id="font-family"><option value="serif">宋体/衬线</option><option value="sans">无衬线</option><option value="mono">等宽</option></select></label><label>字号<select id="font-size"><option value="16">16 px</option><option value="18">18 px</option><option value="20">20 px</option><option value="22">22 px</option><option value="24">24 px</option></select></label><label>行间距<select id="line-height"><option value="1.6">1.6</option><option value="1.8">1.8</option><option value="2">2.0</option><option value="2.2">2.2</option><option value="2.5">2.5</option></select></label></div>
             </section>
-        </main>
-    </div>
-
-    <!-- Audio element (hidden) -->
-    <audio id="audio-player" preload="auto"></audio>
-
-    <script src="/static/app.js"></script>
+            <section class="settings-section"><h3>Qwen 语音</h3>
+                <label>API Key<input id="qwen-api-key" type="password" placeholder="sk-..."></label>
+                <label>API Base URL<input id="qwen-api-base" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1"></label>
+                <div class="model-row"><label>模型<select id="qwen-model"></select></label><button class="secondary-button fetch-models" data-provider="qwen">获取模型</button></div>
+                <label>语音模式<select id="qwen-voice-mode"><option value="default">默认音色</option><option value="clone">克隆音色</option></select></label>
+                <label id="default-voice-field">默认音色<select id="qwen-voice"><option>Cherry</option><option>Vivian</option><option>Moon</option><option>Ethan</option></select></label>
+                <div id="clone-voice-field" hidden><label>已提交音色<select id="clone-voice-select"><option value="">暂无已提交音色</option></select></label><label>提交新的音源<input id="clone-audio" type="file" accept="audio/*"></label><button class="secondary-button" id="submit-clone">提交新音源</button><p class="backup-status">提交成功后会自动保存音源，并出现在上面的下拉菜单中。</p></div>
+            </section>
+            <section class="settings-section"><h3>DeepSeek 文本优化</h3>
+                <label>API Key<input id="deepseek-api-key" type="password" placeholder="sk-..."></label>
+                <label>API Base URL<input id="deepseek-api-base" placeholder="https://api.deepseek.com/v1"></label>
+                <div class="model-row"><label>模型<select id="deepseek-model"></select></label><button class="secondary-button fetch-models" data-provider="deepseek">获取模型</button></div>
+                <label>读图模型<select id="deepseek-vision-model"></select></label>
+            </section>
+            <section class="settings-section"><h3>论文库备份</h3>
+                <div class="backup-actions"><button class="secondary-button" id="export-backup">导出完整备份</button><button class="secondary-button" id="import-backup">导入备份</button><input id="backup-file" type="file" accept=".zip,application/zip" hidden></div>
+                <label>自动备份间隔<select id="backup-interval"><option value="0">关闭自动备份</option><option value="7">每 7 天</option><option value="14">每 14 天</option><option value="30" selected>每 30 天</option><option value="90">每 90 天</option></select></label>
+                <p id="backup-status" class="backup-status">备份内容包括论文、文件夹、文本版本、原 PDF、语音包和音源文件。</p>
+                <div class="backup-actions"><button class="secondary-button" id="open-recycle">打开回收站</button></div>
+            </section>
+        </div>
+        <div class="modal-footer"><div class="footer-left settings-footer-actions"><button class="secondary-button" id="open-jobs">后台任务</button><button class="secondary-button" id="open-resources">资源管理</button></div><button class="secondary-button" id="reset-settings">恢复默认</button><button class="primary-button" id="save-settings">保存设置</button></div>
+    </section>
+</div>
+<div id="resources-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal resources-modal" role="dialog" aria-modal="true" aria-labelledby="resources-title">
+        <div class="modal-header"><div><div class="eyebrow">RESOURCE CENTER</div><h2 id="resources-title">资源管理</h2></div><button class="icon-button" id="close-resources">×</button></div>
+        <div class="resources-body">
+            <p class="resource-help">自动识别文本和后台任务日志默认可清理；其他资源默认受保护。删除后会进入回收站，保留 30 天。</p>
+            <div class="resource-toolbar"><button class="secondary-button" id="refresh-resources">刷新</button><button class="danger-button" id="cleanup-resources">一键清除可清理资源</button><span id="resource-status" class="backup-status"></span></div>
+            <div id="resource-groups" class="resource-groups"></div>
+        </div>
+    </section>
+</div>
+<div id="recycle-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal recycle-modal" role="dialog" aria-modal="true" aria-labelledby="recycle-title">
+        <div class="modal-header"><div><div class="eyebrow">RECYCLE BIN</div><h2 id="recycle-title">回收站</h2></div><button class="icon-button" id="close-recycle">×</button></div>
+        <div class="resources-body">
+            <p class="resource-help">手动删除的资源会保留 30 天，逾期后自动清除。恢复后资源会回到原来的位置。</p>
+            <div class="resource-toolbar"><button class="secondary-button" id="refresh-recycle">刷新</button><span id="recycle-status" class="backup-status"></span></div>
+            <div id="recycle-list" class="resource-list"></div>
+        </div>
+    </section>
+</div>
+<div id="audio-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal audio-modal" role="dialog" aria-modal="true" aria-labelledby="audio-title">
+        <div class="modal-header"><div><div class="eyebrow">AUDIO PACKAGES</div><h2 id="audio-title">完整语音</h2></div><button class="icon-button" id="close-audio">×</button></div>
+        <div class="audio-modal-body">
+            <label>使用文本版本<select id="audio-text-version"></select></label>
+            <label>生成方式<select id="audio-provider"><option value="edge_tts">本地 Edge TTS</option><option value="qwen_tts">在线 Qwen TTS</option><option value="local_bridge">本地大模型 TTS（中介）</option></select></label>
+            <p id="audio-provider-hint">Edge TTS 免费使用，任务会在后台完整生成。</p>
+            <section id="local-bridge-settings" class="local-bridge-settings" hidden>
+                <label>中介服务 IP 或主机<input id="local-bridge-host" placeholder="127.0.0.1"></label>
+                <label>端口<input id="local-bridge-port" type="number" min="1" max="65535" placeholder="47840"></label>
+                <div class="bridge-test-row"><button class="secondary-button" id="test-local-bridge">测试连接</button><button class="secondary-button" id="confirm-local-bridge" disabled>确认使用此中介</button><span id="local-bridge-status" class="bridge-status">尚未测试</span></div>
+                <p class="bridge-help">需要先测试连接成功，确认后才能发送任务。中介负责调用本地大模型和 GPU 运行环境；生成完成后请导出 ZIP，再使用“导入语音”导入。</p>
+            </section>
+            <div class="audio-actions"><button class="primary-button" id="start-audio">生成完整语音</button><button class="secondary-button" id="import-audio" hidden>导入语音</button><input id="audio-package-input" type="file" accept=".zip,application/zip" multiple hidden></div>
+            <section class="package-section"><h3>已生成的语音包</h3><div id="audio-packages" class="package-list"></div></section>
+        </div>
+    </section>
+</div>
+<div id="optimize-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal optimize-modal" role="dialog" aria-modal="true" aria-labelledby="optimize-title">
+        <div class="modal-header"><div><div class="eyebrow">TEXT PROCESSING</div><h2 id="optimize-title">优化文本</h2></div><button class="icon-button" id="close-optimize">×</button></div>
+        <div class="optimize-options">
+            <button class="process-option" id="manual-text-button"><span class="process-option-title">导入手动正文</span><span>从本地 TXT 或 Markdown 文件导入正文，并保存为独立的手动正文版本。</span></button>
+            <button class="process-option" id="vision-extract-button"><span class="process-option-title">DeepSeek 读图识别</span><span>按 PDF 页面读取，只保存论文纯正文，过滤标题、摘要、图表和参考文献。</span></button>
+            <button class="process-option process-option-reading" id="reading-optimize-button"><span class="process-option-title">朗读优化</span><span>建议先完成手动导入或 DeepSeek 读图识别，再对当前选中的文本进行朗读优化，通常能获得更好的效果。</span></button>
+            <input id="manual-text-input" type="file" accept=".txt,.md,.markdown,text/plain" hidden>
+        </div>
+    </section>
+</div>
+<div id="reading-confirm-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal reading-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reading-confirm-title">
+        <div class="modal-header"><div><div class="eyebrow">READING OPTIMIZATION</div><h2 id="reading-confirm-title">确认朗读优化</h2></div><button class="icon-button" id="close-reading-confirm">×</button></div>
+        <div class="reading-confirm-body"><p id="reading-confirm-text"></p><p id="reading-confirm-warning" class="reading-confirm-warning" hidden>当前文本来自自动识别，文本可能存在乱码、错位或段落缺失，非常不建议直接在此基础上进行朗读优化。建议先使用手动导入或 DeepSeek 读图识别。</p><div class="reading-confirm-actions"><button class="secondary-button" id="cancel-reading-confirm">取消</button><button class="primary-button" id="confirm-reading-optimize">确认优化</button></div></div>
+    </section>
+</div>
+<div id="manual-kb-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal manual-kb-modal" role="dialog" aria-modal="true" aria-labelledby="manual-kb-title">
+        <div class="modal-header"><div><div class="eyebrow">KNOWLEDGE BASE</div><h2 id="manual-kb-title">设置知识库信息</h2></div><button class="icon-button" id="close-manual-kb">×</button></div>
+        <div class="manual-kb-body">
+            <p id="manual-kb-intro">是否要为这份手动导入文本增加知识库信息？</p>
+            <div id="manual-kb-choice" class="manual-kb-choice"><button class="secondary-button" id="manual-kb-no">不增加</button><button class="primary-button" id="manual-kb-yes">增加知识库信息</button></div>
+            <div id="manual-kb-fields" hidden>
+                <label>论文标题<input id="manual-kb-title" placeholder="请输入论文标题"></label>
+                <label>作者<input id="manual-kb-authors" placeholder="请输入作者，可多人"></label>
+                <label>摘要<textarea id="manual-kb-abstract" rows="7" placeholder="请输入中文摘要；没有中文摘要时填写原文摘要"></textarea></label>
+                <p class="manual-kb-note">明确设定后，AstrBot 知识库会优先使用这份手动导入文本。</p>
+            </div>
+            <div class="manual-kb-actions"><button class="secondary-button" id="manual-kb-cancel">取消</button><button class="primary-button" id="manual-kb-submit" hidden>保存并导入</button></div>
+        </div>
+    </section>
+</div>
+<div id="jobs-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal jobs-modal" role="dialog" aria-modal="true" aria-labelledby="jobs-title">
+        <div class="modal-header"><div><div class="eyebrow">BACKGROUND TASKS</div><h2 id="jobs-title">后台生成任务</h2></div><button class="icon-button" id="close-jobs">×</button></div>
+        <div id="jobs-list" class="jobs-list"></div>
+    </section>
+</div>
+<div id="logs-modal" class="modal-backdrop" hidden>
+    <section class="settings-modal logs-modal" role="dialog" aria-modal="true" aria-labelledby="logs-title">
+        <div class="modal-header"><div><div class="eyebrow">TASK LOGS</div><h2 id="logs-title">任务日志</h2></div><button class="icon-button" id="close-logs">×</button></div>
+        <pre id="logs-content" class="logs-content"></pre>
+    </section>
+</div>
+<div id="toast" class="toast" role="status"></div>
+<script src="/static/app.js?v=20260825-10"></script>
 </body>
 </html>

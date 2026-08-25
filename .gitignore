@@ -156,3 +156,12 @@ output*
 app/static/audio/*
 !app/static/audio/.gitkeep
 
+# Local runtime and packaging output
+build-exe/
+tmp/
+data/
+
+# Bundled companion artifacts are published separately as Release assets
+local-tts-bridge-package/
+*.zip
+test-*.pdf

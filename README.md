@@ -1,158 +1,113 @@
 # PDF-Listen-Read
 
-⚠️ **免责声明**：本项目全部由 AI 构建，虽然经过测试但可能存在不可预见的 bug。使用前请确保了解风险，作者不对因使用本软件导致的任何损失负责。
+一个面向论文阅读的 Web 应用：保存原始 PDF，管理多种正文版本，按文本版本生成和播放语音，并通过通用 HTTP 接口连接外部 Agent 或知识库工具。
 
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+> 本项目仍在持续开发中。使用前请备份论文库，并自行评估第三方模型 API 和本地 TTS 运行环境的风险。
 
-**将 PDF 论文转换为可听的语音，支持边读边看、文本编辑和本地语音合成** 
+## 主要功能
 
-> 无需等待整篇转换完成，边生成边播放 | 点击文本跳转播放 | 本地 TTS 免费使用  
-> 专为学术论文阅读优化，解决 PDF 识别错误 | 适合视力障碍者/通勤场景/多任务处理
+- 论文和文件夹管理，保留原始 PDF，并在阅读页切换“原文件 / 文本”。
+- 四种彼此独立的文本版本：自动识别、手动导入、DeepSeek 读图识别、朗读优化。
+- DeepSeek 读图识别只把论文纯正文放入阅读文本；标题、作者和摘要作为隐藏知识库元信息保存。
+- 朗读优化始终针对当前选中的文本版本，重新优化时覆盖原来的朗读优化版本。
+- 每个语音包绑定具体的文本版本；切换文本版本不会误播其他版本的语音。
+- 支持分段播放、完整语音、任务进度、日志、暂停/停止和失败信息查看。
+- 支持本地 Edge TTS、在线 TTS，以及通过 HTTP 中介调用外部本地大模型 TTS。
+- 支持声音克隆音源保存和复用。
+- 资源管理、备份、回收站和过期资源清理，适合 Docker/NAS 部署。
+- 提供带 Token 的集成 API，可供 AstrBot 或其他 Agent 工具读取论文和知识库专用文本。
 
-## ✨ 核心功能
+## 快速开始
 
-### 📚 智能 PDF 处理
-- 自动提取文本并智能分段（修复换行/断词问题）
-- 支持直接编辑识别内容（删除目录/页眉等干扰项）
-- 中文论文优化分段（按句号/段落智能切割）
+### 本地运行
 
-### 🔉 语音播放
-- **边生成边播放**：无需等待整篇合成完成
-- **点击跳转**：点击任意段落立即跳转播放
-- **双模式 TTS**：
-  - ✅ **本地 TTS**（默认）：使用 edge-tts（微软神经语音），**完全免费**，无需 API Key
-  - ☁️ **云端 API**：支持阿里云百炼（CosyVoice）、OpenAI TTS 等
-- 📥 **完整音频下载**：合并所有片段为一个 MP3 文件
-- ⛔ **停止生成**：可随时终止耗时操作
-- 🧠 **LLM 文本优化**：调用大语言模型将学术文本改写为更适合朗读的口语表达
-- 🧹 **一键清除缓存**：清理所有生成的音频文件和文档数据
+需要 Python 3.11 或更高版本，以及系统可用的 `ffmpeg`。
 
-### 💻 用户体验
-- 与播放进度同步的**高亮文本**（卡拉OK效果）
-- 语速调节（0.5x ~ 2.0x）
-- 语音角色切换（本地支持 4+ 种中文神经语音）
-- 操作记录与状态反馈
-- 播放控制和状态栏**固定在左下角**，滚动阅读时不消失
-
-## 🚀 快速开始
-
-### 1. 安装依赖
-```bash
-pip install -r requirements.txt
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn app.server:app --host 127.0.0.1 --port 8000
 ```
 
-### 2. 启动服务
-```bash
-uvicorn app.server:app --host 0.0.0.0 --port 8000
-```
-访问 http://127.0.0.1:8000
+打开 <http://127.0.0.1:8000>。
 
-### 3. 使用流程
-1. **上传 PDF** 或 **直接编辑文本**
-2. 点击"获取模型列表"（仅云端模式需要）
-3. **选择语音模式**：
-   - ✅ 本地 TTS：默认勾选，立即使用（推荐）
-   - ☁️ 云端 API：填写 API Key 后选择模型
-4. 点击"处理并加载"
-5. （可选）点击"LLM 优化文本"按钮，用 AI 将原文改写为更口语化的版本
-6. 点击播放按钮开始听书
+首次启动后，API Key、DeepSeek 读图参数和 TTS 参数可以在 WebUI 设置中填写。论文库默认保存在项目目录下的 `data/`；也可以通过环境变量指定位置：
 
-## ⚙️ 配置说明
-
-### 本地 TTS（默认）
-无需配置，开箱即用，支持以下语音：
-| 语音模型 | 适用场景 |
-|----------|----------|
-| `zh-CN-XiaoxiaoNeural` | 通用女声（推荐） |
-| `zh-CN-YunxiNeural` | 年轻男声 |
-| `zh-CN-YunjianNeural` | 沉稳男声 |
-| `zh-CN-XiaoyiNeural` | 可爱女声 |
-
-### 云端 API（可选）
-1. 复制你的 API Key（如 [阿里云百炼](https://help.aliyun.com/zh/model-studio)）
-2. 填写配置：
-   - **API Base URL**：`https://dashscope.aliyuncs.com/compatible-mode/v1`
-   - **TTS 模型**：`cosyvoice-v3-flash`（推荐）
-   - **语音角色**：`longanyang`（v3 模型专属）
-3. 点击"获取模型列表"自动填充选项
-
-> 💡 提示：新用户通常有免费额度，[查看定价](https://help.aliyun.com/zh/model-studio/cosyvoice)
-
-## 📦 部署选项
-
-### 本地运行（推荐）
-```bash
-uvicorn app.server:app --host 127.0.0.1 --port 8000
+```powershell
+$env:PDF_LISTEN_DATA_DIR = 'D:\pdf-listen-read-data'
+python -m uvicorn app.server:app --host 0.0.0.0 --port 8000
 ```
 
-### Docker 部署
+### Docker / NAS
+
 ```bash
-# 构建镜像
 docker build -t pdf-listen-read .
-
-# 运行容器（推荐映射音频缓存目录以便管理）
 docker run -d \
-  -p 8000:8000 \
-  -v /your/host/audio/path:/app/app/static/audio \
   --name pdf-listen-read \
+  -p 8000:8000 \
+  -v /your/host/pdf-listen-read-data:/data \
   pdf-listen-read
 ```
 
-> **群晖 NAS 部署**：在 Docker 套件中导入镜像后，创建容器时在「存储空间」添加映射：
-> - 本地路径：`/docker/pdf-listen-read/audio`
-> - 装载路径：`/app/app/static/audio`
-> - 权限：读写
->
-> 音频缓存文件将保存在该目录，可在 File Station 中直接管理删除。
+容器内应用使用 `/data` 保存 SQLite、原始 PDF、文本、音频、任务日志和备份。NAS 部署时建议只把可变数据映射到 `/data`，不要把运行时数据写回镜像层。更多部署说明见 [DOCKER_DEPLOY.md](DOCKER_DEPLOY.md)。
 
-### Nginx 反向代理
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-    }
-}
+## 文本和知识库规则
+
+阅读和朗读只使用用户当前选择的文本版本。知识库使用单独的选择规则：
+
+1. 明确设置为知识库文本的手动导入版本；
+2. DeepSeek 读图识别版本；
+3. 两者都没有时跳过知识库同步。
+
+自动识别文本和朗读优化文本不会被 AstrBot 插件作为知识库来源。标题、作者、摘要只作为隐藏元信息提供给知识库接口，不会混入阅读正文、朗读优化或 TTS 中介任务。
+
+## 本地大模型 TTS 中介
+
+中介源代码位于仓库的 `local-tts-bridge/`，它只负责接收语音任务、调用用户指定的外部 TTS 运行资源并导出 PDF 阅读器可导入的 ZIP。CUDA/ROCm 推理后端和模型不放入中介源代码或普通运行包，而是在中介设置页选择本机已有的资源目录。
+
+中介协议说明见 [LOCAL_TTS_BRIDGE_PROTOCOL.md](LOCAL_TTS_BRIDGE_PROTOCOL.md)。中介封装版不提交到 Git，因为其中包含体积较大的普通运行依赖；稳定版本应作为 GitHub Release 附件提供。
+
+## 外部 Agent / AstrBot 对接
+
+先在 PDF 阅读器配置 `PDF_LISTEN_INTEGRATION_TOKEN`，外部请求使用：
+
+```http
+Authorization: Bearer <同一个 Token>
 ```
 
-## 📂 项目结构
+常用接口：
+
+```text
+GET  /api/integration/papers
+GET  /api/integration/papers/{paper_id}
+GET  /api/integration/papers/{paper_id}/text
+GET  /api/integration/papers/{paper_id}/knowledge
+GET  /api/integration/papers/{paper_id}/sync-state
+POST /api/integration/papers/{paper_id}/sync-ack
+POST /api/integration/papers/{paper_id}/delete-ack
 ```
+
+其中 `/knowledge` 只返回符合知识库规则的正文分段及标题、作者、摘要；如果没有手动或读图文本会返回 404。完整请求示例见 [INTEGRATION_API.md](INTEGRATION_API.md)。
+
+配套 AstrBot 插件位于 `astrbot_plugin_pdf_library_kb/`，复制到 AstrBot 插件目录后配置朗读器地址、集成 Token 和 Embedding Provider 即可。
+
+## 仓库结构
+
+```text
 PDF-Listen-Read/
-├── app/
-│   ├── __init__.py
-│   ├── server.py            # FastAPI 后端
-│   └── static/
-│       ├── index.html       # Web 界面
-│       ├── style.css        # 样式文件
-│       ├── app.js           # 前端逻辑
-│       └── audio/           # 音频缓存目录（运行时生成）
-│           └── .gitkeep
-├── Dockerfile               # Docker 构建文件
-├── .dockerignore
-├── .gitignore
-├── .env.example             # 配置模板
-├── requirements.txt         # 依赖列表
-└── LICENSE                  # MIT 许可证
+├── app/                              # FastAPI 后端和 WebUI
+├── local-tts-bridge/                 # 本地 TTS 中介源代码
+├── astrbot_plugin_pdf_library_kb/    # AstrBot 知识库插件
+├── Dockerfile
+├── requirements.txt
+├── LOCAL_TTS_BRIDGE_PROTOCOL.md
+├── INTEGRATION_API.md
+└── LICENSE
 ```
 
-## 🤝 贡献指南
-1. Fork 本仓库
-2. 创建新分支 (`git checkout -b feature/your-feature`)
-3. 提交更改 (`git commit -am 'Add some feature'`)
-4. 推送分支 (`git push origin feature/your-feature`)
-5. 发起 Pull Request
+运行数据、模型、CUDA/ROCm 后端、Python 虚拟环境和 PyInstaller 构建缓存均不应提交到仓库。
 
-## 📜 许可证
-本项目采用 [MIT 许可证](LICENSE)，这意味着：
-- ✅ 可以**随意修改代码**
-- ✅ 可以**用于商业项目**
-- ✅ 可以**私有化部署**
-- ❌ 唯须保留原作者版权信息
+## 许可证
 
----
-
-> 由开发者社区驱动，为学术研究者打造的阅读工具  
-> 🌐 [GitHub 项目地址](https://github.com/YuKi-skadi/PDF-Listen-Read)
+本项目采用 [MIT License](LICENSE)。第三方模型、语音服务和运行时资源遵循其各自许可证。
